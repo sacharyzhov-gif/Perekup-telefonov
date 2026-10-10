@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Симулятор перекупа телефонов</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#10151d;color:#edf2fa;font:16px Arial,sans-serif;padding:16px}h1{font-size:24px}button{background:#3478f6;color:white;border:0;border-radius:10px;padding:12px;margin:4px;font-weight:bold}button:disabled{opacity:.4}input,select{padding:11px;border-radius:8px;border:1px solid #455166;background:#202938;color:white;max-width:100%}.card{background:#1b2431;border:1px solid #303c4e;border-radius:14px;padding:13px;margin:10px 0}.muted{color:#a8b4c6}.price{color:#61dc9b;font-weight:bold}.stats{display:flex;gap:8px;flex-wrap:wrap}.stats div{background:#202938;padding:10px;border-radius:9px;flex:1;min-width:90px}.tabs{position:sticky;top:0;background:#10151d;padding:5px 0}.hidden{display:none}small{color:#a8b4c6}
+</style>
+</head>
+<body>
+<h1>📱 Симулятор перекупа</h1>
+<div class="stats">
+<div>💰 Деньги<br><b id="money">15000</b> ₽</div>
+<div>⭐ Репутация<br><b id="rep">0</b></div>
+<div>📦 Продано<br><b id="sold">0</b></div>
+</div>
+<div class="tabs">
+<button onclick="show('market')">🛒 Рынок</button>
+<button onclick="show('stock')">📦 Мои телефоны</button>
+<button onclick="show('repair')">🔧 Ремонт</button>
+<button onclick="show('save')">💾 Сохранение</button>
+</div>
+<section id="market"><h2>Объявления</h2><input id="search" placeholder="Поиск модели..." oninput="renderMarket()"><div id="list"></div></section>
+<section id="stock" class="hidden"><h2>Мои телефоны</h2><div id="owned"></div></section>
+<section id="repair" class="hidden"><h2>Мастерская</h2><p>Выбери телефон из своего списка и восстанови его состояние.</p><div id="repairs"></div></section>
+<section id="save" class="hidden"><h2>Сохранение</h2><button onclick="save()">Сохранить игру</button><button onclick="resetGame()">Начать заново</button><p id="msg"></p><p><small>Игра сохраняется в памяти браузера на этом устройстве.</small></p></section>
+<div class="card"><b>📋 Журнал</b><div id="log">Ты открыл свой первый магазин. Пора искать выгодные сделки!</div></div>
+<script>
+const models=[
+["iPhone 11",9500],["iPhone 12",14500],["iPhone 13",21000],["iPhone 14",29000],["iPhone 15",39000],
+["Samsung Galaxy A14",6500],["Samsung Galaxy A34",12500],["Samsung Galaxy S21",17000],["Samsung Galaxy S22",23000],["Samsung Galaxy S23",34000],
+["Xiaomi Redmi 10",5000],["Xiaomi Redmi Note 12",8500],["Xiaomi Redmi Note 13",11000],["Poco X5",10000],["Poco X6 Pro",19000],
+["Huawei P30",7000],["Honor X8",8000],["Honor 90",18000],["Google Pixel 7",21000],["OnePlus 10",20000],
+["iPhone XR",7500],["iPhone SE 2022",9000],["Samsung Galaxy A54",15000],["Samsung Galaxy S20",12500],["Xiaomi Mi 11",11000],
+["Realme 10",7500],["Realme 11 Pro",13000],["Nokia G50",5000],["Sony Xperia 5",14000],["Nothing Phone 1",16000]
+];
+let state={money:15000,rep:0,sold:0,owned:[],market:[],next:1};
+function generate(){state.market=[];for(let i=0;i<9;i++){let m=models[Math.floor(Math.random()*models.length)];let health=45+Math.floor(Math.random()*56);let price=Math.round(m[1]*(health/100)*(0.72+Math.random()*.38)/100)*100;state.market.push({id:state.next++,name:m[0],base:m[1],price:Math.max(1000,price),health,issue:health<65?"Есть дефекты":"Рабочий"});}}
+function money(n){return Math.round(n).toLocaleString("ru-RU")}
+function log(t){document.getElementById("log").innerHTML=t+"<br>"+document.getElementById("log").innerHTML}
+function save(){localStorage.setItem("perekup-save",JSON.stringify(state));document.getElementById("msg").textContent="Сохранено!";}
+function load(){try{let s=localStorage.getItem("perekup-save");if(s)state=JSON.parse(s)}catch(e){}if(!state.market.length)generate()}
+function show(id){document.querySelectorAll("body>section").forEach(x=>x.classList.add("hidden"));document.getElementById(id).classList.remove("hidden");render()}
+function buy(id){let p=state.market.find(x=>x.id===id);if(!p||state.money<p.price)return;state.money-=p.price;state.owned.push({...p});state.market=state.market.filter(x=>x.id!==id);log("Куплен "+p.name+" за "+money(p.price)+" ₽");save();render()}
+function sell(id){let p=state.owned.find(x=>x.id===id);if(!p)return;let value=Math.round(p.base*p.health/100*.92);state.money+=value;state.rep+=p.health>75?2:1;state.sold++;state.owned=state.owned.filter(x=>x.id!==id);log("Продан "+p.name+" за "+money(value)+" ₽");save();render()}
+function fix(id){let p=state.owned.find(x=>x.id===id);if(!p||p.health>=95)return;let cost=1200;if(state.money<cost)return;state.money-=cost;p.health=Math.min(100,p.health+30);log("Отремонтирован "+p.name);save();render()}
+function renderMarket(){let q=(document.getElementById("search")?.value||"").toLowerCase();document.getElementById("list").innerHTML=state.market.filter(p=>p.name.toLowerCase().includes(q)).map(p=>`<div class="card"><b>${p.name}</b><p class="muted">${p.issue} · Состояние ${p.health}%</p><p class="price">${money(p.price)} ₽</p><button onclick="buy(${p.id})" ${state.money<p.price?"disabled":""}>Купить</button></div>`).join("")||"<p>Нет объявлений. Обнови рынок.</p>";}
+function render(){document.getElementById("money").textContent=money(state.money);document.getElementById("rep").textContent=state.rep;document.getElementById("sold").textContent=state.sold;renderMarket();document.getElementById("owned").innerHTML=state.owned.map(p=>`<div class="card"><b>${p.name}</b><p>Состояние: ${p.health}%</p><button onclick="sell(${p.id})">Продать · ${money(p.base*p.health/100*.92)} ₽</button></div>`).join("")||"<p>Пока нет телефонов. Купи что-нибудь на рынке.</p>";document.getElementById("repairs").innerHTML=state.owned.map(p=>`<div class="card"><b>${p.name}</b><p>Состояние: ${p.health}%</p><button onclick="fix(${p.id})" ${p.health>=95||state.money<1200?"disabled":""}>Ремонт · 1200 ₽</button></div>`).join("")||"<p>Нет телефонов для ремонта.</p>";}
+function resetGame(){if(confirm("Удалить прогресс и начать заново?")){localStorage.removeItem("perekup-save");state={money:15000,rep:0,sold:0,owned:[],market:[],next:1};generate();save();render();document.getElementById("msg").textContent="Новая игра началась";}}
+load();render();setInterval(()=>{if(state.market.length<12){generate();renderMarket()}},45000);
+</script>
+</body>
+</html>
