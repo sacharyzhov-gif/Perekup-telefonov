@@ -1,6 +1,1 @@
-{
-  "appId": "ru.simulator.perekupatelefonov",
-  "appName": "Симулятор перекупа",
-  "webDir": "www",
-  "bundledWebRuntime": false
-}
+{"appId":"ru.perekup.telefonov","appName":"Перекуп телефонов","webDir":"www","bundledWebRuntime":false}

@@ -1,17 +1,8 @@
 {
-  "name": "simulator-perekupa-telefonov",
-  "version": "1.0.0",
+  "name": "perekup-telefonov",
+  "version": "2.0.0",
   "private": true,
-  "description": "Android wrapper for phone resale simulator",
-  "scripts": {
-    "build": "echo Web app ready",
-    "android:sync": "cap sync android"
-  },
-  "dependencies": {
-    "@capacitor/android": "^7.4.3",
-    "@capacitor/core": "^7.4.3"
-  },
-  "devDependencies": {
-    "@capacitor/cli": "^7.4.3"
-  }
+  "scripts": {"build":"echo Static HTML game"},
+  "dependencies": {"@capacitor/android":"^7.0.0","@capacitor/core":"^7.0.0"},
+  "devDependencies": {"@capacitor/cli":"^7.0.0"}
 }
